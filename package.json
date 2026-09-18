@@ -1,0 +1,37 @@
+{
+  "name": "yt-grab",
+  "productName": "YT Grab",
+  "version": "1.0.0",
+  "description": "Download YouTube videos as MP4 or audio as MP3. macOS Apple Silicon.",
+  "main": "src/main.js",
+  "author": "whiteleypa",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac --arm64",
+    "pack": "electron-builder --mac --arm64 --dir"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.whiteleypa.ytgrab",
+    "productName": "YT Grab",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["src/**/*", "package.json"],
+    "asarUnpack": ["node_modules/ffmpeg-static/**"],
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["arm64"] }],
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    }
+  }
+}

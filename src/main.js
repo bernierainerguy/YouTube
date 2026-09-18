@@ -1,0 +1,261 @@
+'use strict';
+
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
+const { ensureYtDlp, ffmpegPath } = require('./binaries');
+
+let mainWindow = null;
+let currentProc = null;
+let cancelled = false;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 760,
+    height: 720,
+    minWidth: 620,
+    minHeight: 560,
+    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#14161a',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.once('ready-to-show', () => mainWindow.show());
+
+  // Open external links in the default browser, never in-app.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+}
+
+function send(channel, payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel, payload);
+  }
+}
+
+function defaultOutputDir() {
+  const downloads = app.getPath('downloads');
+  const dir = path.join(downloads, 'YT Grab');
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch {
+    return downloads;
+  }
+}
+
+function runYtDlp(binary, args, onLine) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(binary, args, { windowsHide: true });
+    currentProc = proc;
+
+    let stderr = '';
+    let buffer = '';
+
+    const handle = (chunk) => {
+      buffer += chunk.toString();
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop();
+      for (const line of lines) if (line.trim()) onLine(line.trim());
+    };
+
+    proc.stdout.on('data', handle);
+    proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+      handle(chunk);
+    });
+
+    proc.on('error', (err) => {
+      currentProc = null;
+      reject(err);
+    });
+
+    proc.on('close', (code) => {
+      currentProc = null;
+      if (buffer.trim()) onLine(buffer.trim());
+      if (code === 0) return resolve();
+      if (cancelled) return reject(new Error('Cancelled'));
+      reject(new Error(stderr.trim().split('\n').slice(-3).join('\n') || `yt-dlp exited with code ${code}`));
+    });
+  });
+}
+
+// --- IPC -------------------------------------------------------------------
+
+ipcMain.handle('app:paths', () => ({
+  outputDir: defaultOutputDir(),
+  ffmpeg: ffmpegPath()
+}));
+
+ipcMain.handle('app:ensure-ytdlp', async (_evt, force = false) => {
+  const bin = await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct), force);
+  return bin;
+});
+
+ipcMain.handle('dialog:choose-folder', async () => {
+  const res = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+    buttonLabel: 'Save here'
+  });
+  return res.canceled ? null : res.filePaths[0];
+});
+
+ipcMain.handle('shell:reveal', (_evt, target) => {
+  if (!target) return;
+  if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
+    shell.openPath(target);
+  } else {
+    shell.showItemInFolder(target);
+  }
+});
+
+ipcMain.handle('media:info', async (_evt, url) => {
+  const bin = await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct));
+  let json = '';
+  await runYtDlp(bin, ['-J', '--no-warnings', '--no-playlist', url], (line) => {
+    if (line.startsWith('{')) json = line;
+  });
+  if (!json) throw new Error('Could not read video info.');
+  const info = JSON.parse(json);
+  return {
+    title: info.title,
+    uploader: info.uploader || info.channel,
+    duration: info.duration,
+    thumbnail: info.thumbnail,
+    maxHeight: Math.max(0, ...(info.formats || []).map((f) => f.height || 0))
+  };
+});
+
+ipcMain.handle('media:download', async (_evt, opts) => {
+  const { url, format, quality, audioBitrate, outputDir, playlist } = opts;
+  cancelled = false;
+
+  const bin = await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct));
+  const ffmpeg = ffmpegPath();
+
+  const args = [
+    '--newline',
+    '--no-warnings',
+    '--ignore-config',
+    '--progress',
+    '--progress-template',
+    'PROG|%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s',
+    '-o',
+    path.join(outputDir, '%(title).180B [%(id)s].%(ext)s'),
+    '--no-mtime',
+    '--restrict-filenames'
+  ];
+
+  if (ffmpeg) args.push('--ffmpeg-location', ffmpeg);
+  args.push(playlist ? '--yes-playlist' : '--no-playlist');
+
+  if (format === 'mp3') {
+    args.push(
+      '-f',
+      'bestaudio/best',
+      '-x',
+      '--audio-format',
+      'mp3',
+      '--audio-quality',
+      String(audioBitrate || 192) + 'K',
+      '--embed-thumbnail',
+      '--add-metadata'
+    );
+  } else {
+    const cap = quality && quality !== 'best' ? `[height<=${quality}]` : '';
+    args.push(
+      '-f',
+      `bv*${cap}[ext=mp4]+ba[ext=m4a]/bv*${cap}+ba/b${cap}[ext=mp4]/b${cap}/b`,
+      '--merge-output-format',
+      'mp4',
+      '--add-metadata'
+    );
+  }
+
+  args.push(url);
+
+  let lastFile = null;
+
+  await runYtDlp(bin, args, (line) => {
+    if (line.startsWith('PROG|')) {
+      const [, downloaded, total, estimate, speed, eta] = line.split('|');
+      const totalBytes = Number(total) || Number(estimate) || 0;
+      const doneBytes = Number(downloaded) || 0;
+      send('download:progress', {
+        percent: totalBytes ? Math.min(100, (doneBytes / totalBytes) * 100) : null,
+        speed: Number(speed) || 0,
+        eta: Number(eta) || 0,
+        downloaded: doneBytes,
+        total: totalBytes
+      });
+      return;
+    }
+
+    const dest =
+      line.match(/^\[(?:Merger|ExtractAudio)\].*?(?:to|Destination:)\s+"?(.+?)"?$/) ||
+      line.match(/^\[download\] Destination:\s+(.+)$/) ||
+      line.match(/^\[download\]\s+(.+?)\s+has already been downloaded$/);
+    if (dest) lastFile = dest[1];
+
+    send('download:log', line);
+  });
+
+  return { file: lastFile, outputDir };
+});
+
+ipcMain.handle('media:cancel', () => {
+  cancelled = true;
+  if (currentProc) {
+    currentProc.kill('SIGTERM');
+    return true;
+  }
+  return false;
+});
+
+// --- lifecycle -------------------------------------------------------------
+
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      { role: 'appMenu' },
+      { role: 'editMenu' },
+      { role: 'windowMenu' },
+      {
+        role: 'help',
+        submenu: [
+          {
+            label: 'Update yt-dlp',
+            click: async () => {
+              try {
+                await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct), true);
+                send('download:log', '[app] yt-dlp updated.');
+              } catch (err) {
+                send('download:log', `[app] yt-dlp update failed: ${err.message}`);
+              }
+            }
+          }
+        ]
+      }
+    ])
+  );
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (currentProc) currentProc.kill('SIGTERM');
+  if (process.platform !== 'darwin') app.quit();
+});

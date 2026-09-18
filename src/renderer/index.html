@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https: data:;"
+    />
+    <title>YT Grab</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="drag">
+      <h1>YT Grab</h1>
+      <p class="sub">Save a video as MP4 or pull the audio out as MP3.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <label class="field">
+          <span>YouTube URL</span>
+          <div class="row">
+            <input
+              id="url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <button id="paste" class="ghost" type="button">Paste</button>
+          </div>
+        </label>
+
+        <div id="preview" class="preview hidden">
+          <img id="thumb" alt="" />
+          <div class="meta">
+            <strong id="ptitle"></strong>
+            <span id="pmeta"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="segmented" role="radiogroup" aria-label="Output format">
+          <button class="seg active" data-format="mp4" role="radio" aria-checked="true">
+            Video · MP4
+          </button>
+          <button class="seg" data-format="mp3" role="radio" aria-checked="false">
+            Audio · MP3
+          </button>
+        </div>
+
+        <label class="field" id="quality-field">
+          <span>Max resolution</span>
+          <select id="quality">
+            <option value="best">Best available</option>
+            <option value="2160">2160p (4K)</option>
+            <option value="1440">1440p</option>
+            <option value="1080" selected>1080p</option>
+            <option value="720">720p</option>
+            <option value="480">480p</option>
+            <option value="360">360p</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="bitrate-field">
+          <span>MP3 bitrate</span>
+          <select id="bitrate">
+            <option value="320">320 kbps</option>
+            <option value="256">256 kbps</option>
+            <option value="192" selected>192 kbps</option>
+            <option value="128">128 kbps</option>
+          </select>
+        </label>
+
+        <label class="check">
+          <input id="playlist" type="checkbox" />
+          <span>Download the whole playlist if the link points to one</span>
+        </label>
+
+        <label class="field">
+          <span>Save to</span>
+          <div class="row">
+            <input id="folder" type="text" readonly />
+            <button id="browse" class="ghost" type="button">Choose…</button>
+          </div>
+        </label>
+      </section>
+
+      <section class="actions">
+        <button id="go" class="primary" type="button">Download</button>
+        <button id="stop" class="danger hidden" type="button">Cancel</button>
+        <button id="open" class="ghost" type="button">Open folder</button>
+      </section>
+
+      <section class="card status">
+        <div class="bar"><div id="fill"></div></div>
+        <div class="statline">
+          <span id="status">Ready.</span>
+          <span id="rate"></span>
+        </div>
+        <details id="logbox">
+          <summary>Details</summary>
+          <pre id="log"></pre>
+        </details>
+      </section>
+    </main>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
