@@ -216,10 +216,20 @@ ipcMain.handle('media:download', async (_evt, opts) => {
       return;
     }
 
+    // yt-dlp announces its pick as "[info] Downloading 1 format(s): 137+140".
+    // Worth surfacing: it is the only way to tell H.264 from VP9 after the fact.
+    const chosen = line.match(/^\[info\] .*?Downloading \d+ format\(s\):\s*(.+)$/);
+    if (chosen) send('download:formats', chosen[1].trim());
+
+    // yt-dlp silently skips a download when the target file already exists,
+    // which looks identical to success and hands back the previous file.
+    const skipped = line.match(/^\[download\]\s+(.+?)\s+has already been downloaded$/);
+    if (skipped) send('download:skipped', skipped[1]);
+
     const dest =
       line.match(/^\[(?:Merger|ExtractAudio)\].*?(?:to|Destination:)\s+"?(.+?)"?$/) ||
       line.match(/^\[download\] Destination:\s+(.+)$/) ||
-      line.match(/^\[download\]\s+(.+?)\s+has already been downloaded$/);
+      skipped;
     if (dest) lastFile = dest[1];
 
     send('download:log', line);

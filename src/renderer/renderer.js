@@ -34,6 +34,8 @@ const CONSENT_KEY = 'ytgrab.licence-acknowledged.v1';
 
 let format = 'mp4';
 let busy = false;
+let lastFormats = null;
+let wasSkipped = false;
 let infoTimer = null;
 
 // --- helpers ---------------------------------------------------------------
@@ -182,6 +184,8 @@ el.go.addEventListener('click', async () => {
   setProgress(null);
   el.rate.textContent = '';
   el.log.textContent = '';
+  lastFormats = null;
+  wasSkipped = false;
   setStatus('Starting…');
 
   try {
@@ -197,8 +201,15 @@ el.go.addEventListener('click', async () => {
 
     setProgress(100);
     el.fill.classList.add('done');
-    el.rate.textContent = '';
-    setStatus(res.file ? `Saved ${res.file.split('/').pop()}` : 'Done.');
+    el.rate.textContent = lastFormats ? `format ${lastFormats}` : '';
+
+    if (wasSkipped) {
+      // Never let a skipped download read as a fresh one: the file on disk may
+      // predate a settings change and have entirely different codecs.
+      setStatus('Already in that folder — kept the existing file, nothing downloaded.');
+    } else {
+      setStatus(res.file ? `Saved ${res.file.split('/').pop()}` : 'Done.');
+    }
   } catch (err) {
     const msg = String(err.message || err).replace(/^Error invoking remote method '.*?': /, '');
     setProgress(0);
@@ -236,6 +247,16 @@ window.api.onLog((line) => {
     setProgress(null);
     setStatus(format === 'mp3' ? 'Converting audio…' : 'Merging video and audio…');
   }
+});
+
+window.api.onFormats((f) => {
+  lastFormats = f;
+  log(`[app] yt-dlp chose format ${f}`);
+});
+
+window.api.onSkipped((file) => {
+  wasSkipped = true;
+  log(`[app] file already exists, download skipped: ${file}`);
 });
 
 window.api.onSetupProgress((pct) => {

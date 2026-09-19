@@ -13,5 +13,7 @@ contextBridge.exposeInMainWorld('api', {
 
   onProgress: (cb) => ipcRenderer.on('download:progress', (_e, p) => cb(p)),
   onLog: (cb) => ipcRenderer.on('download:log', (_e, l) => cb(l)),
-  onSetupProgress: (cb) => ipcRenderer.on('ytdlp:setup-progress', (_e, p) => cb(p))
+  onSetupProgress: (cb) => ipcRenderer.on('ytdlp:setup-progress', (_e, p) => cb(p)),
+  onFormats: (cb) => ipcRenderer.on('download:formats', (_e, f) => cb(f)),
+  onSkipped: (cb) => ipcRenderer.on('download:skipped', (_e, f) => cb(f))
 });
