@@ -10,28 +10,46 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --mac --arm64",
-    "pack": "electron-builder --mac --arm64 --dir"
+    "pack": "electron-builder --mac --arm64 --dir",
+    "build:mac": "bash ./build-mac.command"
   },
   "dependencies": {
     "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
-    "electron": "^32.2.0",
-    "electron-builder": "^25.1.8"
+    "electron": "39.8.10",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.whiteleypa.ytgrab",
     "productName": "YT Grab",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["src/**/*", "package.json"],
-    "asarUnpack": ["node_modules/ffmpeg-static/**"],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ],
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["arm64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
       "category": "public.app-category.utilities",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "notarize": true,
+      "artifactName": "YT-Grab-${version}-${arch}.${ext}"
     }
   }
 }

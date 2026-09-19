@@ -22,8 +22,13 @@ const el = {
   fill: $('fill'),
   status: $('status'),
   rate: $('rate'),
-  log: $('log')
+  log: $('log'),
+  consent: $('consent'),
+  consentCheck: $('consent-check'),
+  consentOk: $('consent-ok')
 };
+
+const CONSENT_KEY = 'ytgrab.licence-acknowledged.v1';
 
 let format = 'mp4';
 let busy = false;
@@ -213,11 +218,45 @@ window.api.onSetupProgress((pct) => {
   if (!busy) setStatus(`Setting up yt-dlp… ${pct}%`);
 });
 
+// --- licence acknowledgement -----------------------------------------------
+
+function hasAcknowledged() {
+  try {
+    return localStorage.getItem(CONSENT_KEY) === 'yes';
+  } catch {
+    // Private window or blocked storage: ask again rather than assume consent.
+    return false;
+  }
+}
+
+function showConsent() {
+  el.consent.classList.remove('hidden');
+  el.go.disabled = true;
+  el.consentCheck.focus();
+}
+
+el.consentCheck.addEventListener('change', () => {
+  el.consentOk.disabled = !el.consentCheck.checked;
+});
+
+el.consentOk.addEventListener('click', () => {
+  try {
+    localStorage.setItem(CONSENT_KEY, 'yes');
+  } catch {
+    // Not persisting is fine; they will simply be asked again next launch.
+  }
+  el.consent.classList.add('hidden');
+  el.go.disabled = busy;
+  el.url.focus();
+});
+
 // --- boot ------------------------------------------------------------------
 
 (async () => {
   const paths = await window.api.paths();
   el.folder.value = paths.outputDir;
+
+  if (!hasAcknowledged()) showConsent();
 
   try {
     setStatus('Checking downloader…');

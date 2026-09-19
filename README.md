@@ -25,30 +25,39 @@ npm install
 npm start
 ```
 
-## Build a .dmg for Apple Silicon
+## Build a signed, notarised .dmg
+
+Same flow as WESC — signing and notarisation happen **on the Mac**, not in CI:
 
 ```bash
-npm run dist
+npm run build:mac      # or double-click build-mac.command in Finder
 ```
 
-The installer lands in `dist/`. The build is unsigned, so the first launch needs a right-click → **Open**, or:
+It signs with the `Developer ID Application: Bernie Rainer-Guy (T57Q5FRCB6)` certificate from your login keychain, pinned by hash so an expired duplicate can't be picked by mistake, notarises the dmg through the `WESC_NOTARY` notarytool keychain profile (same Apple account, so nothing extra to set up), then staples and verifies with `spctl`. The result lands in `dist/`.
+
+The script refuses to start if the certificate or notary profile is missing, rather than quietly producing something unshippable.
+
+Overrides:
+
+| Variable | Effect |
+| --- | --- |
+| `APPLE_SIGNING_IDENTITY_HASH` | Use a different Developer ID certificate |
+| `APPLE_KEYCHAIN_PROFILE` | Use a different notarytool profile |
+| `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` (+ `APPLE_TEAM_ID`) | Notarise with credentials instead of a keychain profile |
+| `YTGRAB_SKIP_NOTARIZE=1` | Sign, but skip notarisation |
+| `YTGRAB_SKIP_MAC_SIGNING=1` | Unsigned local build |
+
+### Unsigned CI build
+
+`.github/workflows/build-macos.yml` builds an **unsigned** dmg on a `macos-14` runner — handy for a quick test build without a Mac to hand, but not for distribution. Run it from Actions → *Build macOS (arm64)* → Run workflow, or push a `v*` tag to get it attached to a draft release. Unsigned builds need the quarantine flag cleared:
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/YT Grab.app"
 ```
 
-To sign and notarise it yourself, set `CSC_LINK` / `CSC_KEY_PASSWORD` and the `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID` environment variables before `npm run dist`; entitlements are already in `build/entitlements.mac.plist`.
+Signed releases come from `build-mac.command`, not from CI.
 
 **Note:** build on a Mac. `electron-builder` can't produce a macOS app from Linux or Windows — `hdiutil` and codesign are macOS-only.
-
-## Build in CI instead
-
-`.github/workflows/build-macos.yml` builds the arm64 dmg on a `macos-14` (Apple Silicon) runner, so you never need to run the build locally:
-
-- **On demand** — Actions → *Build macOS (arm64)* → Run workflow. The dmg lands as a workflow artifact for 30 days.
-- **On a tag** — push `v1.0.0` (or any `v*` tag) and the dmg is also attached to a **draft** release for you to publish.
-
-CI builds unsigned (`CSC_IDENTITY_AUTO_DISCOVERY: false`). To sign and notarise there, add `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` as repository secrets, pass them into the build step's `env`, and drop the `CSC_IDENTITY_AUTO_DISCOVERY` line.
 
 ## Layout
 
@@ -63,4 +72,6 @@ Security posture: `contextIsolation` on, `nodeIntegration` off, a strict CSP in 
 
 ## Legal
 
-Downloading content from YouTube generally breaches its Terms of Service. Use this on your own uploads, on material you hold the rights to, or where the licence permits it. You are responsible for what you download.
+**Only download videos you own or are licensed to download.** The app states this on first launch, requires acknowledgement before it will download anything, and keeps the notice visible in the main window.
+
+Downloading content you have no right to may breach YouTube's Terms of Service and infringe copyright. Use this on your own uploads, on material you hold the rights to, or where the licence permits it. You are solely responsible for what you download and what you do with it.

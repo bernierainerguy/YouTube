@@ -1,4 +1,4 @@
-name: Build macOS (arm64)
+name: Build macOS (arm64, unsigned)
 
 on:
   push:
@@ -24,17 +24,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build arm64 dmg
+      - name: Build unsigned arm64 dmg
         env:
-          # No signing certificate in CI: build unsigned rather than failing
-          # when electron-builder cannot find an identity in the keychain.
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run dist
+        # Signed, notarised releases come from build-mac.command on the Mac.
+        # CI has neither the Developer ID certificate nor notary credentials,
+        # so identity and notarisation are both turned off explicitly —
+        # build.mac.notarize is true for the local release flow.
+        run: npx electron-builder --mac --arm64 -c.mac.identity=null -c.mac.notarize=false
 
       - name: Upload dmg artifact
         uses: actions/upload-artifact@v4
         with:
-          name: YT-Grab-macos-arm64
+          name: YT-Grab-macos-arm64-unsigned
           path: |
             dist/*.dmg
             dist/*.dmg.blockmap
