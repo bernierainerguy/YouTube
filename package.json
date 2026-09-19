@@ -32,7 +32,7 @@
       "package.json"
     ],
     "asarUnpack": [
-      "node_modules/ffmpeg-static/**"
+      "**/node_modules/ffmpeg-static/**"
     ],
     "mac": {
       "target": [
@@ -50,6 +50,7 @@
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "notarize": true,
       "artifactName": "YT-Grab-${version}-${arch}.${ext}"
-    }
+    },
+    "afterPack": "build/afterPack.js"
   }
 }
