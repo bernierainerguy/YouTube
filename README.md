@@ -39,7 +39,16 @@ xattr -dr com.apple.quarantine "/Applications/YT Grab.app"
 
 To sign and notarise it yourself, set `CSC_LINK` / `CSC_KEY_PASSWORD` and the `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID` environment variables before `npm run dist`; entitlements are already in `build/entitlements.mac.plist`.
 
-**Note:** build on a Mac. `electron-builder` can't produce a signed macOS app from Linux or Windows.
+**Note:** build on a Mac. `electron-builder` can't produce a macOS app from Linux or Windows — `hdiutil` and codesign are macOS-only.
+
+## Build in CI instead
+
+`.github/workflows/build-macos.yml` builds the arm64 dmg on a `macos-14` (Apple Silicon) runner, so you never need to run the build locally:
+
+- **On demand** — Actions → *Build macOS (arm64)* → Run workflow. The dmg lands as a workflow artifact for 30 days.
+- **On a tag** — push `v1.0.0` (or any `v*` tag) and the dmg is also attached to a **draft** release for you to publish.
+
+CI builds unsigned (`CSC_IDENTITY_AUTO_DISCOVERY: false`). To sign and notarise there, add `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` as repository secrets, pass them into the build step's `env`, and drop the `CSC_IDENTITY_AUTO_DISCOVERY` line.
 
 ## Layout
 
