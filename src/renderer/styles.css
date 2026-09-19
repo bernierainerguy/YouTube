@@ -187,3 +187,12 @@ pre {
   font-size: 11px;
   color: #6f7680;
 }
+
+.gate-error {
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.sheet .field span { font-size: 11px; }
+.sheet .field input { background: #0f1216; }

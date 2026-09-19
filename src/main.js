@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { ensureYtDlp, ffmpegPath } = require('./binaries');
+const licence = require('./licence');
 
 let mainWindow = null;
 let currentProc = null;
@@ -138,6 +139,19 @@ ipcMain.handle('media:info', async (_evt, url) => {
 
 ipcMain.handle('media:download', async (_evt, opts) => {
   const { url, format, quality, audioBitrate, outputDir, playlist, compatible } = opts;
+
+  // Enforce here rather than trusting the renderer to hide its own button.
+  const verdict = licence.evaluate();
+  if (!verdict.allowed) {
+    throw new Error(
+      verdict.reason === 'denied'
+        ? `This copy has been deactivated.${verdict.state.deniedReason ? ` ${verdict.state.deniedReason}` : ''}`
+        : verdict.reason === 'grace-expired'
+          ? 'This copy has not checked in for 30 days. Connect to the internet and reopen the app.'
+          : 'Please register before downloading.'
+    );
+  }
+
   cancelled = false;
 
   const bin = await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct));
@@ -238,6 +252,19 @@ ipcMain.handle('media:download', async (_evt, opts) => {
   return { file: lastFile, outputDir };
 });
 
+ipcMain.handle('licence:state', () => licence.evaluate());
+
+ipcMain.handle('licence:register', async (_evt, identity) => {
+  licence.setIdentity(identity || {});
+  const result = await licence.checkin();
+  return { ...result, verdict: licence.evaluate() };
+});
+
+ipcMain.handle('licence:checkin', async () => {
+  const result = await licence.checkin();
+  return { ...result, verdict: licence.evaluate() };
+});
+
 ipcMain.handle('media:cancel', () => {
   cancelled = true;
   if (currentProc) {
@@ -274,6 +301,18 @@ app.whenReady().then(() => {
     ])
   );
   createWindow();
+
+  // Check in shortly after launch: refreshes the 30-day grace and picks up a
+  // deactivation. Failure is non-fatal — evaluate() falls back to the cache.
+  setTimeout(() => {
+    const state = licence.getState();
+    if (state.name && state.email) {
+      licence
+        .checkin()
+        .then(() => send('licence:updated', licence.evaluate()))
+        .catch(() => {});
+    }
+  }, 4000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

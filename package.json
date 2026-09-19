@@ -1,7 +1,7 @@
 {
   "name": "yt-grab",
   "productName": "YT Grab",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Download YouTube videos as MP4 or audio as MP3. macOS Apple Silicon.",
   "main": "src/main.js",
   "author": "whiteleypa",
@@ -11,7 +11,8 @@
     "start": "electron .",
     "dist": "electron-builder --mac --arm64",
     "pack": "electron-builder --mac --arm64 --dir",
-    "build:mac": "bash ./build-mac.command"
+    "build:mac": "bash ./build-mac.command",
+    "upload": "node scripts/upload-to-site.js"
   },
   "dependencies": {
     "ffmpeg-static": "^5.2.0"

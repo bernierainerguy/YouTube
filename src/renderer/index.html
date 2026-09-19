@@ -119,25 +119,46 @@
       </p>
     </main>
 
-    <div id="consent" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="consent-title">
+    <div id="gate" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
       <div class="sheet">
-        <h2 id="consent-title">Before you start</h2>
-        <p>
-          YT Grab is for downloading video and audio that <strong>you own, or
-          are licensed or otherwise permitted to download</strong> — your own
-          uploads, material you hold the rights to, or content whose licence
-          allows it.
-        </p>
-        <p>
-          Downloading content you have no right to may breach YouTube's Terms
-          of Service and infringe copyright. You are solely responsible for
-          what you download and what you do with it.
-        </p>
-        <label class="check">
-          <input id="consent-check" type="checkbox" />
-          <span>I understand, and will only download content I'm licensed to.</span>
-        </label>
-        <button id="consent-ok" class="primary" type="button" disabled>Agree and continue</button>
+        <div id="gate-register">
+          <h2 id="gate-title">Register YT Grab</h2>
+          <p>
+            Registration links this copy to you and keeps it activated. The app
+            checks in when it starts; if it cannot reach the licence server for
+            30 days it stops working until it can.
+          </p>
+
+          <label class="field">
+            <span>Your name</span>
+            <input id="reg-name" type="text" autocomplete="name" spellcheck="false" />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input id="reg-email" type="email" autocomplete="email" spellcheck="false" />
+          </label>
+
+          <label class="check">
+            <input id="reg-agree" type="checkbox" />
+            <span>
+              I will only download content I own or am licensed to download, and
+              accept that I am responsible for how I use this app.
+            </span>
+          </label>
+
+          <p id="reg-error" class="gate-error hidden"></p>
+
+          <button id="reg-submit" class="primary" type="button" disabled>
+            Register and continue
+          </button>
+        </div>
+
+        <div id="gate-blocked" class="hidden">
+          <h2>This copy is not active</h2>
+          <p id="blocked-message"></p>
+          <button id="blocked-retry" class="primary" type="button">Try again</button>
+        </div>
       </div>
     </div>
 

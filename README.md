@@ -86,6 +86,36 @@ xattr -dr com.apple.quarantine "/Applications/YT Grab.app"
 
 Security posture: `contextIsolation` on, `nodeIntegration` off, a strict CSP in the renderer, and external links open in the default browser.
 
+## Registration and licence check-in
+
+The app requires registration (name + email) before it will download anything, and checks in with the licence server on launch. This uses the **same protocol and endpoint as WESC**:
+
+```
+POST https://whiteleyevents.co.uk/welm-api.php?action=checkin
+{ uuid, name, email, machine_name, app: "ytgrab", version }
+```
+
+- The server keys records on `uuid` alone and stores `app` alongside, so YT Grab installs sit beside WESC ones without colliding. **No server-side change was needed.**
+- New records are created as `granted`. Flipping one to `denied` in WP Admin blocks that install at its next check-in.
+- A successful check-in refreshes a **30-day local grace**. If the server is unreachable the cached grant is trusted until that expires, with a warning in the final 7 days — being offline should not lock someone out mid-use.
+- If the very first check-in fails (offline install), the grace clock still starts, so the copy gets its 30 days rather than being dead on arrival.
+- The download handler enforces this in the main process, not just by hiding the button.
+
+State lives in `userData/licence-checkin.json`. Point `YTGRAB_LICENCE_SERVER` elsewhere to test against a staging site.
+
+## Publishing to whiteleyevents.co.uk
+
+```bash
+cp .env.example .env     # add WELM_APP_USER / WELM_APP_PASSWORD
+npm run upload dist/YT-Grab-*.dmg
+```
+
+This streams the dmg to the theme's software endpoint, which files it under `/uploads/whe-software/<product>/MAC/` and lists it on the Software page — the same route WESC uses.
+
+**Prerequisite:** the product must exist first. In WP Admin → **Software → Products**, create an entry with the key `ytgrab`. The endpoint rejects anything it cannot match to a catalogue entry (`Could not match file to a software product`), and the same catalogue populates the public Software page.
+
+Credentials are a WordPress **application password**, not the account password. `.env` is gitignored.
+
 ## Legal
 
 **Only download videos you own or are licensed to download.** The app states this on first launch, requires acknowledgement before it will download anything, and keeps the notice visible in the main window.

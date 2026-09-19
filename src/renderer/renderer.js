@@ -25,12 +25,17 @@ const el = {
   status: $('status'),
   rate: $('rate'),
   log: $('log'),
-  consent: $('consent'),
-  consentCheck: $('consent-check'),
-  consentOk: $('consent-ok')
+  gate: $('gate'),
+  gateRegister: $('gate-register'),
+  gateBlocked: $('gate-blocked'),
+  regName: $('reg-name'),
+  regEmail: $('reg-email'),
+  regAgree: $('reg-agree'),
+  regSubmit: $('reg-submit'),
+  regError: $('reg-error'),
+  blockedMessage: $('blocked-message'),
+  blockedRetry: $('blocked-retry')
 };
-
-const CONSENT_KEY = 'ytgrab.licence-acknowledged.v1';
 
 let format = 'mp4';
 let busy = false;
@@ -77,7 +82,7 @@ function setProgress(percent) {
 
 function setBusy(state) {
   busy = state;
-  el.go.disabled = state;
+  el.go.disabled = state || !licensed;
   el.stop.classList.toggle('hidden', !state);
   el.go.textContent = state ? 'Downloading…' : 'Download';
 }
@@ -263,37 +268,109 @@ window.api.onSetupProgress((pct) => {
   if (!busy) setStatus(`Setting up yt-dlp… ${pct}%`);
 });
 
-// --- licence acknowledgement -----------------------------------------------
+// --- licence gate -----------------------------------------------------------
 
-function hasAcknowledged() {
-  try {
-    return localStorage.getItem(CONSENT_KEY) === 'yes';
-  } catch {
-    // Private window or blocked storage: ask again rather than assume consent.
-    return false;
-  }
-}
+let licensed = false;
 
-function showConsent() {
-  el.consent.classList.remove('hidden');
+function showGate(which) {
+  el.gate.classList.remove('hidden');
+  el.gateRegister.classList.toggle('hidden', which !== 'register');
+  el.gateBlocked.classList.toggle('hidden', which !== 'blocked');
   el.go.disabled = true;
-  el.consentCheck.focus();
 }
 
-el.consentCheck.addEventListener('change', () => {
-  el.consentOk.disabled = !el.consentCheck.checked;
+function hideGate() {
+  el.gate.classList.add('hidden');
+  el.go.disabled = busy;
+}
+
+function blockedText(verdict) {
+  if (verdict.reason === 'denied') {
+    const why = verdict.state && verdict.state.deniedReason;
+    return `This copy has been deactivated.${why ? ` ${why}` : ''} Contact Whiteley Events if you think this is wrong.`;
+  }
+  if (verdict.reason === 'grace-expired') {
+    return 'This copy has not been able to check in for 30 days, so it has stopped working. Connect to the internet and try again.';
+  }
+  return 'This copy is not currently active.';
+}
+
+function applyVerdict(verdict) {
+  licensed = Boolean(verdict && verdict.allowed);
+
+  if (licensed) {
+    hideGate();
+    if (verdict.warning) setStatus(verdict.warning, true);
+    return;
+  }
+
+  showGate(verdict && verdict.reason === 'unregistered' ? 'register' : 'blocked');
+  if (verdict && verdict.reason !== 'unregistered') {
+    el.blockedMessage.textContent = blockedText(verdict);
+  }
+}
+
+function validRegistration() {
+  const name = el.regName.value.trim();
+  const email = el.regEmail.value.trim();
+  // Deliberately loose: the server does the authoritative validation.
+  return name.length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && el.regAgree.checked;
+}
+
+function syncRegisterButton() {
+  el.regSubmit.disabled = !validRegistration();
+}
+
+for (const node of [el.regName, el.regEmail, el.regAgree]) {
+  node.addEventListener('input', syncRegisterButton);
+  node.addEventListener('change', syncRegisterButton);
+}
+
+el.regSubmit.addEventListener('click', async () => {
+  el.regSubmit.disabled = true;
+  el.regSubmit.textContent = 'Registering…';
+  el.regError.classList.add('hidden');
+
+  try {
+    const res = await window.api.licenceRegister({
+      name: el.regName.value.trim(),
+      email: el.regEmail.value.trim()
+    });
+
+    if (res.verdict && res.verdict.allowed) {
+      applyVerdict(res.verdict);
+      setStatus(res.offline ? 'Registered. Could not reach the licence server yet.' : 'Registered.');
+    } else if (res.status === 'denied') {
+      el.regError.textContent =
+        (res.state && res.state.deniedReason) || 'The licence server rejected these details.';
+      el.regError.classList.remove('hidden');
+    } else {
+      applyVerdict(res.verdict);
+    }
+  } catch (err) {
+    el.regError.textContent = String(err.message || err);
+    el.regError.classList.remove('hidden');
+  } finally {
+    el.regSubmit.textContent = 'Register and continue';
+    syncRegisterButton();
+  }
 });
 
-el.consentOk.addEventListener('click', () => {
+el.blockedRetry.addEventListener('click', async () => {
+  el.blockedRetry.disabled = true;
+  el.blockedRetry.textContent = 'Checking…';
   try {
-    localStorage.setItem(CONSENT_KEY, 'yes');
+    const res = await window.api.licenceCheckin();
+    applyVerdict(res.verdict);
   } catch {
-    // Not persisting is fine; they will simply be asked again next launch.
+    // Leave the blocked sheet up; the message already explains the situation.
+  } finally {
+    el.blockedRetry.disabled = false;
+    el.blockedRetry.textContent = 'Try again';
   }
-  el.consent.classList.add('hidden');
-  el.go.disabled = busy;
-  el.url.focus();
 });
+
+window.api.onLicenceUpdated(applyVerdict);
 
 // --- boot ------------------------------------------------------------------
 
@@ -303,7 +380,7 @@ el.consentOk.addEventListener('click', () => {
 
   syncQualityCeiling();
 
-  if (!hasAcknowledged()) showConsent();
+  applyVerdict(await window.api.licenceState());
 
   try {
     setStatus('Checking downloader…');
