@@ -137,7 +137,7 @@ ipcMain.handle('media:info', async (_evt, url) => {
 });
 
 ipcMain.handle('media:download', async (_evt, opts) => {
-  const { url, format, quality, audioBitrate, outputDir, playlist } = opts;
+  const { url, format, quality, audioBitrate, outputDir, playlist, compatible } = opts;
   cancelled = false;
 
   const bin = await ensureYtDlp((pct) => send('ytdlp:setup-progress', pct));
@@ -173,13 +173,28 @@ ipcMain.handle('media:download', async (_evt, opts) => {
     );
   } else {
     const cap = quality && quality !== 'best' ? `[height<=${quality}]` : '';
-    args.push(
-      '-f',
-      `bv*${cap}[ext=mp4]+ba[ext=m4a]/bv*${cap}+ba/b${cap}[ext=mp4]/b${cap}/b`,
-      '--merge-output-format',
-      'mp4',
-      '--add-metadata'
-    );
+
+    // QuickTime (and most Apple software) only decodes H.264 video with AAC
+    // audio inside an mp4. YouTube also serves VP9 and AV1 with Opus, which
+    // mux into an .mp4 container perfectly happily and then refuse to play.
+    // So constrain the codecs, not just the container.
+    const selector = compatible
+      ? [
+          `bv*[vcodec^=avc1]${cap}+ba[acodec^=mp4a]`,
+          `bv*[vcodec^=avc1]${cap}+ba`,
+          `b[vcodec^=avc1]${cap}`,
+          `b[ext=mp4]${cap}`,
+          `b${cap}`
+        ].join('/')
+      : [
+          `bv*${cap}+ba[ext=m4a]`,
+          `bv*${cap}+ba`,
+          `b${cap}[ext=mp4]`,
+          `b${cap}`,
+          'b'
+        ].join('/');
+
+    args.push('-f', selector, '--merge-output-format', 'mp4', '--add-metadata');
   }
 
   args.push(url);

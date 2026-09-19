@@ -179,3 +179,11 @@ pre {
 .sheet .check { margin-top: 2px; align-items: flex-start; line-height: 1.45; }
 .sheet .check input { margin-top: 2px; }
 .sheet .primary { margin-top: 4px; }
+
+.check em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 11px;
+  color: #6f7680;
+}

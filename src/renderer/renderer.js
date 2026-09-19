@@ -14,6 +14,8 @@ const el = {
   bitrate: $('bitrate'),
   bitrateField: $('bitrate-field'),
   playlist: $('playlist'),
+  compatible: $('compatible'),
+  compatNote: $('compat-note'),
   folder: $('folder'),
   browse: $('browse'),
   go: $('go'),
@@ -79,6 +81,27 @@ function setBusy(state) {
 }
 
 // --- format switch ---------------------------------------------------------
+
+// H.264 tops out at 1080p on YouTube, so offering 1440p/2160p alongside the
+// compatibility setting would silently hand back a 1080p file instead.
+function syncQualityCeiling() {
+  const capped = el.compatible.checked;
+
+  for (const option of el.quality.options) {
+    const tooTall = option.value !== 'best' && Number(option.value) > 1080;
+    option.disabled = capped && tooTall;
+  }
+
+  if (capped && (el.quality.value === 'best' || Number(el.quality.value) > 1080)) {
+    el.quality.value = '1080';
+  }
+
+  el.compatNote.textContent = capped
+    ? 'YouTube only offers H.264 up to 1080p.'
+    : 'Above 1080p YouTube serves VP9/AV1 — QuickTime may refuse it; VLC plays it.';
+}
+
+el.compatible.addEventListener('change', syncQualityCeiling);
 
 document.querySelectorAll('.seg').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -168,7 +191,8 @@ el.go.addEventListener('click', async () => {
       quality: el.quality.value,
       audioBitrate: Number(el.bitrate.value),
       outputDir: el.folder.value,
-      playlist: el.playlist.checked
+      playlist: el.playlist.checked,
+      compatible: el.compatible.checked
     });
 
     setProgress(100);
@@ -255,6 +279,8 @@ el.consentOk.addEventListener('click', () => {
 (async () => {
   const paths = await window.api.paths();
   el.folder.value = paths.outputDir;
+
+  syncQualityCeiling();
 
   if (!hasAcknowledged()) showConsent();
 
