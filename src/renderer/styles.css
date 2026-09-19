@@ -56,7 +56,7 @@ main {
 .field > span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
 .row { display: flex; gap: 8px; }
 
-input[type="url"], input[type="text"], select {
+input:not([type="checkbox"]):not([type="radio"]), select {
   flex: 1;
   min-width: 0;
   background: #14171c;
@@ -196,3 +196,17 @@ pre {
 
 .sheet .field span { font-size: 11px; }
 .sheet .field input { background: #0f1216; }
+
+/* Chromium's autofill forces its own colours, which come out dark-on-dark
+   here. Repaint the field with an inset shadow — background-color itself is
+   not overridable on an autofilled input. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px #0f1216 inset;
+  caret-color: var(--text);
+  transition: background-color 9999s ease-out 0s;
+}
+
+::selection { background: var(--accent); color: #fff; }
