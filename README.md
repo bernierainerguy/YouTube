@@ -47,17 +47,33 @@ Overrides:
 | `YTGRAB_SKIP_NOTARIZE=1` | Sign, but skip notarisation |
 | `YTGRAB_SKIP_MAC_SIGNING=1` | Unsigned local build |
 
-### Unsigned CI build
+### Signing in CI
 
-`.github/workflows/build-macos.yml` builds an **unsigned** dmg on a `macos-14` runner — handy for a quick test build without a Mac to hand, but not for distribution. Run it from Actions → *Build macOS (arm64)* → Run workflow, or push a `v*` tag to get it attached to a draft release. Unsigned builds need the quarantine flag cleared:
+`.github/workflows/build-macos.yml` produces the same signed, notarised dmg on a `macos-14` runner once these repository secrets exist (Settings → Secrets and variables → Actions):
+
+| Secret | What it is |
+| --- | --- |
+| `APPLE_CERT_P12_BASE64` | Developer ID Application certificate **and private key**, exported from Keychain Access as `.p12`, then base64-encoded |
+| `APPLE_CERT_PASSWORD` | The password you set on that `.p12` export |
+| `APPLE_ID` | Apple ID of the developer account |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password from appleid.apple.com (not the account password) |
+| `APPLE_TEAM_ID` | `T57Q5FRCB6` |
+
+To export the certificate:
+
+```bash
+# Keychain Access → My Certificates → right-click the Developer ID
+# Application cert → Export → .p12, then:
+base64 -i Certificates.p12 | pbcopy
+```
+
+The workflow imports the certificate into a throwaway keychain, builds, notarises through `notarytool`, staples and verifies with `spctl`, then deletes the keychain. Run it from Actions → *macOS release (arm64)* → Run workflow, or push a `v*` tag to also attach the dmg to a draft release.
+
+**Without those secrets the workflow still runs but produces an UNSIGNED dmg** (it logs a warning and labels the artefact `unsigned`). Unsigned builds need the quarantine flag cleared before they will open:
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/YT Grab.app"
 ```
-
-Signed releases come from `build-mac.command`, not from CI.
-
-**Note:** build on a Mac. `electron-builder` can't produce a macOS app from Linux or Windows — `hdiutil` and codesign are macOS-only.
 
 ## Layout
 
