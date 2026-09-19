@@ -1,8 +1,8 @@
-# Whiteley Events YT Grab — Privacy Notice
+# WEMG — Privacy Notice
 
 **Last updated: [DATE]**
 
-This notice explains what personal data Whiteley Events YT Grab collects,
+This notice explains what personal data WEMG collects,
 why, and what your rights are. It covers the desktop application only.
 
 ## Who is responsible
@@ -81,7 +81,7 @@ You also have the right to complain to the Information Commissioner's Office
 Your registration details and check-in state are also stored locally, in:
 
 ```
-~/Library/Application Support/Whiteley Events YT Grab/licence-checkin.json
+~/Library/Application Support/WEMG/licence-checkin.json
 ```
 
 Deleting the application and that folder removes everything the application

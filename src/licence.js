@@ -1,5 +1,5 @@
 /*!
- * YT Grab — permissive licence check-in.
+ * Media Grab — permissive licence check-in.
  *
  * Mirrors the WESC check-in protocol (src/main/licenceCheckin.js in the wesc
  * repo) and talks to the same server:
@@ -30,9 +30,9 @@ const http = require('http');
 const { URL } = require('url');
 const { app } = require('electron');
 
-const LICENCE_SERVER = process.env.YTGRAB_LICENCE_SERVER || 'https://whiteleyevents.co.uk';
+const LICENCE_SERVER = process.env.WEMG_LICENCE_SERVER || 'https://whiteleyevents.co.uk';
 const API_PATH = '/welm-api.php';
-const APP_KEY = 'ytgrab';
+const APP_KEY = 'wemg';
 
 const GRACE_MS = 30 * 24 * 60 * 60 * 1000;
 const GRACE_WARN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -124,7 +124,7 @@ function postJson(action, params) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
-          'User-Agent': `YT-Grab/${app.getVersion()}`
+          'User-Agent': `WEMG/${app.getVersion()}`
         }
       },
       (res) => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Whiteley Events YT Grab release build — signed and notarised DMG for Apple Silicon.
+# WEMG release build — signed and notarised DMG for Apple Silicon.
 #
 # Run:   ./build-mac.command
 # (double-clickable from Finder — the .command extension does the work)
@@ -53,8 +53,8 @@ clean_macos_metadata() {
 preflight_mac_signing() {
   MAC_BUILD_ARGS=()
 
-  if [ "${YTGRAB_SKIP_MAC_SIGNING:-0}" = "1" ]; then
-    echo "WARNING: YTGRAB_SKIP_MAC_SIGNING=1 - build will be unsigned and not notarised."
+  if [ "${WEMG_SKIP_MAC_SIGNING:-0}" = "1" ]; then
+    echo "WARNING: WEMG_SKIP_MAC_SIGNING=1 - build will be unsigned and not notarised."
     MAC_BUILD_ARGS+=("-c.mac.identity=null" "-c.mac.notarize=false")
     return 0
   fi
@@ -87,8 +87,8 @@ preflight_mac_signing() {
     export APPLE_TEAM_ID="$MAC_TEAM_ID"
   fi
 
-  if [ "${YTGRAB_SKIP_NOTARIZE:-0}" = "1" ]; then
-    echo "WARNING: YTGRAB_SKIP_NOTARIZE=1 - build will be signed but not notarised."
+  if [ "${WEMG_SKIP_NOTARIZE:-0}" = "1" ]; then
+    echo "WARNING: WEMG_SKIP_NOTARIZE=1 - build will be signed but not notarised."
     MAC_BUILD_ARGS+=("-c.mac.notarize=false")
   elif [ -n "${APPLE_KEYCHAIN_PROFILE:-}" ]; then
     echo "Notarisation will use keychain profile '$APPLE_KEYCHAIN_PROFILE'."
@@ -100,7 +100,7 @@ preflight_mac_signing() {
     echo "Notarisation will use default keychain profile '$APPLE_KEYCHAIN_PROFILE'."
   fi
 
-  if [ "${YTGRAB_SKIP_NOTARIZE:-0}" != "1" ]; then
+  if [ "${WEMG_SKIP_NOTARIZE:-0}" != "1" ]; then
     xcrun notarytool history --keychain-profile "$APPLE_KEYCHAIN_PROFILE" >/dev/null
   fi
 }
@@ -141,7 +141,7 @@ prepare_mac_output_dir() {
   if [ -n "$MAC_DIST_TMP" ] && [ -d "$MAC_DIST_TMP" ]; then
     rm -rf "$MAC_DIST_TMP"
   fi
-  MAC_DIST_TMP="$(mktemp -d /private/tmp/ytgrab-mac-dist.XXXXXX)"
+  MAC_DIST_TMP="$(mktemp -d /private/tmp/wemg-mac-dist.XXXXXX)"
   echo "  ↳ Mac build output: $MAC_DIST_TMP"
 }
 
@@ -157,8 +157,8 @@ run_mac_builder() {
 copy_mac_artifacts_to_dist() {
   mkdir -p dist
   find "$MAC_DIST_TMP" -maxdepth 1 -type f \( \
-    -name "YT-Grab-${VERSION}-*.dmg" -o \
-    -name "YT-Grab-${VERSION}-*.dmg.blockmap" -o \
+    -name "WEMG-${VERSION}-*.dmg" -o \
+    -name "WEMG-${VERSION}-*.dmg.blockmap" -o \
     -name "latest-mac.yml" -o \
     -name "builder-effective-config.yaml" \
   \) -exec cp -p {} dist/ \;
@@ -181,7 +181,7 @@ notarize_and_verify_dmg() {
 }
 
 echo "──────────────────────────────────────────────────────────────"
-echo "  Whiteley Events YT Grab release build — v${VERSION}"
+echo "  WEMG release build — v${VERSION}"
 echo "  Project: ${SCRIPT_DIR}"
 echo "──────────────────────────────────────────────────────────────"
 
@@ -213,10 +213,10 @@ if ! run_mac_builder; then
 fi
 copy_mac_artifacts_to_dist
 
-if [ "${YTGRAB_SKIP_MAC_SIGNING:-0}" != "1" ] && [ "${YTGRAB_SKIP_NOTARIZE:-0}" != "1" ]; then
+if [ "${WEMG_SKIP_MAC_SIGNING:-0}" != "1" ] && [ "${WEMG_SKIP_NOTARIZE:-0}" != "1" ]; then
   echo
   echo "▸ Notarising DMG…"
-  for dmg in dist/YT-Grab-${VERSION}-*.dmg; do
+  for dmg in dist/WEMG-${VERSION}-*.dmg; do
     [ -e "$dmg" ] || continue
     notarize_and_verify_dmg "$dmg"
   done

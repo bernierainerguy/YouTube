@@ -29,7 +29,7 @@ function download(url, dest, onProgress, redirects = 0) {
     if (redirects > 10) return reject(new Error('Too many redirects'));
 
     https
-      .get(url, { headers: { 'User-Agent': 'YT-Grab' } }, (res) => {
+      .get(url, { headers: { 'User-Agent': 'WEMG' } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume();
           return resolve(

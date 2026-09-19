@@ -1,14 +1,14 @@
-# Whiteley Events YT Grab — Third-Party Licences
+# WEMG — Third-Party Licences
 
 This application includes and uses third-party software. Their licence terms
-are set out below and prevail over the YT Grab EULA in respect of those
+are set out below and prevail over the Media Grab EULA in respect of those
 components.
 
 ---
 
 ## FFmpeg — GNU General Public License v3.0 or later
 
-**Whiteley Events YT Grab distributes an FFmpeg binary** (version **6.1.1**,
+**WEMG distributes an FFmpeg binary** (version **6.1.1**,
 release tag `b6.1.1`, as packaged by the `ffmpeg-static` project). FFmpeg is
 free software licensed under the GNU General Public License, version 3 or
 later. The full licence text is included in the application bundle as
@@ -16,7 +16,7 @@ later. The full licence text is included in the application bundle as
 `Contents/Resources/app.asar.unpacked/node_modules/ffmpeg-static/`.
 
 FFmpeg is executed as a separate program, invoked over the command line. It
-is not linked into, and forms no part of, the YT Grab application code.
+is not linked into, and forms no part of, the Media Grab application code.
 
 ### Written offer of source code
 
@@ -38,14 +38,14 @@ The same source is also available at no cost from:
 - <https://github.com/eugeneware/ffmpeg-static> (the build used here)
 
 You may modify and redistribute FFmpeg under the terms of the GPL. Nothing
-in the YT Grab EULA restricts the rights the GPL grants you in respect of
+in the Media Grab EULA restricts the rights the GPL grants you in respect of
 FFmpeg.
 
 ---
 
 ## yt-dlp — The Unlicense (public domain)
 
-YT Grab uses **yt-dlp** to retrieve media. yt-dlp is **not distributed with
+Media Grab uses **yt-dlp** to retrieve media. yt-dlp is **not distributed with
 this application**. On first launch the application downloads the official
 `yt-dlp_macos` binary from the yt-dlp project's own release page into its
 application-support folder, where it is used as a separate program invoked

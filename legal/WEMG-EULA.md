@@ -1,9 +1,9 @@
-# Whiteley Events YT Grab — End User Licence Agreement
+# WEMG — End User Licence Agreement
 
 **Version 1.0 — [DATE]**
 
 This agreement is between **Whiteley Events Ltd** ("we", "us") and you, the
-person installing or using Whiteley Events YT Grab ("the Software"). By
+person installing or using WEMG ("the Software"). By
 registering or using the Software you accept these terms. If you do not
 accept them, do not use the Software.
 

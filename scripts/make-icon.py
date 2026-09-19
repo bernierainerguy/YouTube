@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the YT Grab app icon.
+"""Generate the Media Grab app icon.
 
 Draws an original mark — a downward play triangle resting on a tray bar,
 i.e. "play, saved to disk" — on a rounded squircle in the app's palette.

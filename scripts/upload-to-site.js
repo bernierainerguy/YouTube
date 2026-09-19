@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Upload YT Grab installers to whiteleyevents.co.uk.
+ * Upload Media Grab installers to whiteleyevents.co.uk.
  *
  * Ports the WESC uploader's strategy (scripts/upload-to-site.js in the wesc
  * repo). A single 122 MB POST to the direct endpoint can die server-side
@@ -55,8 +55,8 @@ function loadDotEnv() {
 const env = { ...process.env, ...loadDotEnv() };
 const USER = env.WELM_APP_USER;
 const PASS = env.WELM_APP_PASSWORD;
-const PRODUCT = (env.YTGRAB_UPLOAD_PRODUCT || 'ytgrab').toLowerCase().replace(/[^a-z0-9_-]/g, '');
-const CHUNK_SIZE = Math.max(1, Math.min(64, Number(env.YTGRAB_UPLOAD_CHUNK_MB) || 4)) * 1024 * 1024;
+const PRODUCT = (env.WEMG_UPLOAD_PRODUCT || 'wemg').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+const CHUNK_SIZE = Math.max(1, Math.min(64, Number(env.WEMG_UPLOAD_CHUNK_MB) || 4)) * 1024 * 1024;
 
 if (!USER || !PASS) {
   console.error('✗ Missing WELM_APP_USER or WELM_APP_PASSWORD (put them in .env)');

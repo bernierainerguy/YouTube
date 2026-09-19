@@ -1,4 +1,4 @@
-# Whiteley Events YT Grab
+# WEMG
 
 A small Electron app for macOS (Apple Silicon) that downloads a YouTube video as **MP4**, or just its audio as **MP3**.
 
@@ -11,7 +11,7 @@ A small Electron app for macOS (Apple Silicon) that downloads a YouTube video as
 - Bitrate choice for MP3 (320 / 256 / 192 / 128 kbps), with thumbnail art and metadata embedded.
 - Optional whole-playlist download.
 - Live progress, speed and ETA; cancel mid-download.
-- Files land in `~/Downloads/YT Grab` unless you pick another folder.
+- Files land in `~/Downloads/Media Grab` unless you pick another folder.
 
 ## How it works
 
@@ -44,8 +44,8 @@ Overrides:
 | `APPLE_SIGNING_IDENTITY_HASH` | Use a different Developer ID certificate |
 | `APPLE_KEYCHAIN_PROFILE` | Use a different notarytool profile |
 | `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` (+ `APPLE_TEAM_ID`) | Notarise with credentials instead of a keychain profile |
-| `YTGRAB_SKIP_NOTARIZE=1` | Sign, but skip notarisation |
-| `YTGRAB_SKIP_MAC_SIGNING=1` | Unsigned local build |
+| `WEMG_SKIP_NOTARIZE=1` | Sign, but skip notarisation |
+| `WEMG_SKIP_MAC_SIGNING=1` | Unsigned local build |
 
 ### Signing in CI
 
@@ -72,7 +72,7 @@ The workflow imports the certificate into a throwaway keychain, builds, notarise
 **Without those secrets the workflow still runs but produces an UNSIGNED dmg** (it logs a warning and labels the artefact `unsigned`). Unsigned builds need the quarantine flag cleared before they will open:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/YT Grab.app"
+xattr -dr com.apple.quarantine "/Applications/Media Grab.app"
 ```
 
 ## Layout
@@ -92,27 +92,27 @@ The app requires registration (name + email) before it will download anything, a
 
 ```
 POST https://whiteleyevents.co.uk/welm-api.php?action=checkin
-{ uuid, name, email, machine_name, app: "ytgrab", version }
+{ uuid, name, email, machine_name, app: "wemg", version }
 ```
 
-- The server keys records on `uuid` alone and stores `app` alongside, so YT Grab installs sit beside WESC ones without colliding. **No server-side change was needed.**
+- The server keys records on `uuid` alone and stores `app` alongside, so Media Grab installs sit beside WESC ones without colliding. **No server-side change was needed.**
 - New records are created as `granted`. Flipping one to `denied` in WP Admin blocks that install at its next check-in.
 - A successful check-in refreshes a **30-day local grace**. If the server is unreachable the cached grant is trusted until that expires, with a warning in the final 7 days — being offline should not lock someone out mid-use.
 - If the very first check-in fails (offline install), the grace clock still starts, so the copy gets its 30 days rather than being dead on arrival.
 - The download handler enforces this in the main process, not just by hiding the button.
 
-State lives in `userData/licence-checkin.json`. Point `YTGRAB_LICENCE_SERVER` elsewhere to test against a staging site.
+State lives in `userData/licence-checkin.json`. Point `WEMG_LICENCE_SERVER` elsewhere to test against a staging site.
 
 ## Publishing to whiteleyevents.co.uk
 
 ```bash
 cp .env.example .env     # add WELM_APP_USER / WELM_APP_PASSWORD
-npm run upload dist/YT-Grab-*.dmg
+npm run upload dist/WEMG-*.dmg
 ```
 
 This streams the dmg to the theme's software endpoint, which files it under `/uploads/whe-software/<product>/MAC/` and lists it on the Software page — the same route WESC uses.
 
-**Prerequisite:** the product must exist first. In WP Admin → **Software → Products**, create an entry with the key `ytgrab`. The endpoint rejects anything it cannot match to a catalogue entry (`Could not match file to a software product`), and the same catalogue populates the public Software page.
+**Prerequisite:** the product must exist first. In WP Admin → **Software → Products**, create an entry with the key `wemg`. The endpoint rejects anything it cannot match to a catalogue entry (`Could not match file to a software product`), and the same catalogue populates the public Software page.
 
 Credentials are a WordPress **application password**, not the account password. `.env` is gitignored.
 
@@ -122,9 +122,9 @@ Credentials are a WordPress **application password**, not the account password. 
 
 | Document | Covers |
 | --- | --- |
-| `YT-Grab-EULA.md` | Licence grant, permitted content, check-in and deactivation, warranty and liability |
-| `YT-Grab-Privacy-Notice.md` | What registration collects, lawful basis, retention, UK GDPR rights |
-| `YT-Grab-Third-Party-Licences.md` | FFmpeg (GPL-3.0) written source offer, yt-dlp, Electron |
+| `WEMG-EULA.md` | Licence grant, permitted content, check-in and deactivation, warranty and liability |
+| `WEMG-Privacy-Notice.md` | What registration collects, lawful basis, retention, UK GDPR rights |
+| `WEMG-Third-Party-Licences.md` | FFmpeg (GPL-3.0) written source offer, yt-dlp, Electron |
 
 **These contain `[PLACEHOLDER]` fields** — registered address, contact email, retention periods, hosting provider — which must be filled in before the app is distributed to anyone. Search for `[` to find them.
 

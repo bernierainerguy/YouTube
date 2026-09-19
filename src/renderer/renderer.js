@@ -89,8 +89,9 @@ function setBusy(state) {
 
 // --- format switch ---------------------------------------------------------
 
-// H.264 tops out at 1080p on YouTube, so offering 1440p/2160p alongside the
-// compatibility setting would silently hand back a 1080p file instead.
+// H.264 tops out at 1080p on most sites (YouTube included), so offering
+// 1440p/2160p alongside the compatibility setting would silently hand back a
+// 1080p file instead.
 function syncQualityCeiling() {
   const capped = el.compatible.checked;
 
@@ -104,8 +105,8 @@ function syncQualityCeiling() {
   }
 
   el.compatNote.textContent = capped
-    ? 'YouTube only offers H.264 up to 1080p.'
-    : 'Above 1080p YouTube serves VP9/AV1 — QuickTime may refuse it; VLC plays it.';
+    ? 'H.264 is usually only available up to 1080p.'
+    : 'Above 1080p sites serve VP9/AV1 — QuickTime may refuse it; VLC plays it.';
 }
 
 el.compatible.addEventListener('change', syncQualityCeiling);
@@ -180,7 +181,7 @@ el.open.addEventListener('click', () => window.api.reveal(el.folder.value));
 el.go.addEventListener('click', async () => {
   const url = el.url.value.trim();
   if (!/^https?:\/\//i.test(url)) {
-    setStatus('Paste a YouTube link first.', true);
+    setStatus('Paste a video link first.', true);
     return;
   }
 

@@ -39,9 +39,9 @@ function createWindow() {
 }
 
 const LEGAL_DOCS = {
-  eula: { file: 'YT-Grab-EULA.md', title: 'End User Licence Agreement' },
-  privacy: { file: 'YT-Grab-Privacy-Notice.md', title: 'Privacy Notice' },
-  licences: { file: 'YT-Grab-Third-Party-Licences.md', title: 'Third-Party Licences' }
+  eula: { file: 'WEMG-EULA.md', title: 'End User Licence Agreement' },
+  privacy: { file: 'WEMG-Privacy-Notice.md', title: 'Privacy Notice' },
+  licences: { file: 'WEMG-Third-Party-Licences.md', title: 'Third-Party Licences' }
 };
 
 function legalPath(file) {
@@ -106,7 +106,7 @@ function send(channel, payload) {
 
 function defaultOutputDir() {
   const downloads = app.getPath('downloads');
-  const dir = path.join(downloads, 'YT Grab');
+  const dir = path.join(downloads, 'Media Grab');
   try {
     fs.mkdirSync(dir, { recursive: true });
     return dir;
