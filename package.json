@@ -1,7 +1,7 @@
 {
   "name": "yt-grab",
   "productName": "YT Grab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Download YouTube videos as MP4 or audio as MP3. macOS Apple Silicon.",
   "main": "src/main.js",
   "author": "whiteleypa",
