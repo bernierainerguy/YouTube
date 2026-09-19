@@ -49,7 +49,8 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "notarize": true,
-      "artifactName": "YT-Grab-${version}-${arch}.${ext}"
+      "artifactName": "YT-Grab-${version}-${arch}.${ext}",
+      "icon": "build/icon.icns"
     },
     "afterPack": "build/afterPack.js"
   }
