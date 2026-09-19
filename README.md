@@ -116,6 +116,20 @@ This streams the dmg to the theme's software endpoint, which files it under `/up
 
 Credentials are a WordPress **application password**, not the account password. `.env` is gitignored.
 
+## Legal pack
+
+`legal/` holds the documents shipped inside the app and reachable from **Help** and from the registration sheet:
+
+| Document | Covers |
+| --- | --- |
+| `YT-Grab-EULA.md` | Licence grant, permitted content, check-in and deactivation, warranty and liability |
+| `YT-Grab-Privacy-Notice.md` | What registration collects, lawful basis, retention, UK GDPR rights |
+| `YT-Grab-Third-Party-Licences.md` | FFmpeg (GPL-3.0) written source offer, yt-dlp, Electron |
+
+**These contain `[PLACEHOLDER]` fields** — registered address, contact email, retention periods, hosting provider — which must be filled in before the app is distributed to anyone. Search for `[` to find them.
+
+The FFmpeg binary bundled with the app is **GPL-3.0-or-later** (FFmpeg 6.1.1 via `ffmpeg-static`). Distributing it obliges us to supply its licence text (shipped in the bundle) and a written offer of corresponding source valid for three years — that offer is in the third-party document. FFmpeg runs as a separate command-line process, so the GPL does not extend to this application's own code. yt-dlp is **not** distributed with the app; it is fetched from the yt-dlp project on first run.
+
 ## Legal
 
 **Only download videos you own or are licensed to download.** The app states this on first launch, requires acknowledgement before it will download anything, and keeps the notice visible in the main window.

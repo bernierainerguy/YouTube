@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('api', {
   onFormats: (cb) => ipcRenderer.on('download:formats', (_e, f) => cb(f)),
   onSkipped: (cb) => ipcRenderer.on('download:skipped', (_e, f) => cb(f)),
 
+  openLegal: (key) => ipcRenderer.invoke('legal:open', key),
+
   licenceState: () => ipcRenderer.invoke('licence:state'),
   licenceRegister: (identity) => ipcRenderer.invoke('licence:register', identity),
   licenceCheckin: () => ipcRenderer.invoke('licence:checkin'),

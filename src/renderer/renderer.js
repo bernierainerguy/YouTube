@@ -370,6 +370,10 @@ el.blockedRetry.addEventListener('click', async () => {
   }
 });
 
+document.querySelectorAll('[data-legal]').forEach((btn) => {
+  btn.addEventListener('click', () => window.api.openLegal(btn.dataset.legal));
+});
+
 window.api.onLicenceUpdated(applyVerdict);
 
 // --- boot ------------------------------------------------------------------

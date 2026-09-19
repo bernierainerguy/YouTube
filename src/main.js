@@ -38,6 +38,66 @@ function createWindow() {
   });
 }
 
+const LEGAL_DOCS = {
+  eula: { file: 'YT-Grab-EULA.md', title: 'End User Licence Agreement' },
+  privacy: { file: 'YT-Grab-Privacy-Notice.md', title: 'Privacy Notice' },
+  licences: { file: 'YT-Grab-Third-Party-Licences.md', title: 'Third-Party Licences' }
+};
+
+function legalPath(file) {
+  // Packaged, legal/ sits inside the asar; in development it is beside src/.
+  return path.join(app.isPackaged ? process.resourcesPath : __dirname, '..', 'legal', file);
+}
+
+function readLegal(key) {
+  const doc = LEGAL_DOCS[key];
+  if (!doc) return null;
+
+  const candidates = [
+    legalPath(doc.file),
+    path.join(__dirname, '..', 'legal', doc.file),
+    path.join(process.resourcesPath || '', 'app.asar', 'legal', doc.file)
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      return { ...doc, text: fs.readFileSync(candidate, 'utf-8') };
+    } catch {
+      // Try the next location.
+    }
+  }
+  return { ...doc, text: `Could not find ${doc.file}.` };
+}
+
+function openLegal(key) {
+  const doc = readLegal(key);
+  if (!doc) return;
+
+  const escaped = doc.text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // A data URL keeps this a plain document window: no preload, no scripts,
+  // nothing for the page to reach back into.
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${doc.title}</title>
+<style>
+  body { margin:0; padding:28px 34px; background:#14161a; color:#e8eaed;
+         font:13px/1.65 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  pre  { white-space:pre-wrap; word-wrap:break-word; margin:0; font:inherit; }
+</style></head><body><pre>${escaped}</pre></body></html>`;
+
+  const win = new BrowserWindow({
+    width: 720,
+    height: 760,
+    title: doc.title,
+    backgroundColor: '#14161a',
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+  });
+  win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+}
+
 function send(channel, payload) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(channel, payload);
@@ -252,6 +312,8 @@ ipcMain.handle('media:download', async (_evt, opts) => {
   return { file: lastFile, outputDir };
 });
 
+ipcMain.handle('legal:open', (_evt, key) => openLegal(key));
+
 ipcMain.handle('licence:state', () => licence.evaluate());
 
 ipcMain.handle('licence:register', async (_evt, identity) => {
@@ -285,6 +347,10 @@ app.whenReady().then(() => {
       {
         role: 'help',
         submenu: [
+          { label: 'End User Licence Agreement', click: () => openLegal('eula') },
+          { label: 'Privacy Notice', click: () => openLegal('privacy') },
+          { label: 'Third-Party Licences', click: () => openLegal('licences') },
+          { type: 'separator' },
           {
             label: 'Update yt-dlp',
             click: async () => {
