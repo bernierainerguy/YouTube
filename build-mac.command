@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# YT Grab release build — signed and notarised DMG for Apple Silicon.
+# Whiteley Events YT Grab release build — signed and notarised DMG for Apple Silicon.
 #
 # Run:   ./build-mac.command
 # (double-clickable from Finder — the .command extension does the work)
@@ -181,7 +181,7 @@ notarize_and_verify_dmg() {
 }
 
 echo "──────────────────────────────────────────────────────────────"
-echo "  YT Grab release build — v${VERSION}"
+echo "  Whiteley Events YT Grab release build — v${VERSION}"
 echo "  Project: ${SCRIPT_DIR}"
 echo "──────────────────────────────────────────────────────────────"
 

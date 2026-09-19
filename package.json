@@ -1,8 +1,8 @@
 {
   "name": "yt-grab",
-  "productName": "YT Grab",
-  "version": "1.1.0",
-  "description": "Download YouTube videos as MP4 or audio as MP3. macOS Apple Silicon.",
+  "productName": "Whiteley Events YT Grab",
+  "version": "1.1.1",
+  "description": "Download YouTube video as MP4 or audio as MP3. macOS Apple Silicon.",
   "main": "src/main.js",
   "author": "whiteleypa",
   "license": "MIT",
@@ -22,8 +22,8 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.whiteleypa.ytgrab",
-    "productName": "YT Grab",
+    "appId": "com.whiteleyevents.ytgrab",
+    "productName": "Whiteley Events YT Grab",
     "directories": {
       "output": "dist",
       "buildResources": "build"

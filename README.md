@@ -1,4 +1,4 @@
-# YT Grab
+# Whiteley Events YT Grab
 
 A small Electron app for macOS (Apple Silicon) that downloads a YouTube video as **MP4**, or just its audio as **MP3**.
 
